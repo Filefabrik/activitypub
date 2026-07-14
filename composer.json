@@ -3,8 +3,12 @@
     "type": "library",
     "version": "0.9.0",
     "description": "A PHP implementation of ActivityPub protocol based upon the ActivityStreams 2.0 data format.",
-    "keywords": ["ActivityPub", "ActivityStreams", "federation"],
-    "homepage": "https://github.com/landrok/activitypub",
+    "keywords": [
+        "ActivityPub",
+        "ActivityStreams",
+        "federation"
+    ],
+    "homepage": "https://github.com/filefabrik/activitypub",
     "license": "MIT",
     "require": {
         "php": "^8.5",
@@ -29,6 +33,8 @@
         }
     },
     "archive": {
-        "exclude": ["/docs"]
+        "exclude": [
+            "/docs"
+        ]
     }
 }
