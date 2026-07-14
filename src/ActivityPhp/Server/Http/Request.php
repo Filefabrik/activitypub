@@ -15,34 +15,36 @@ use ActivityPhp\Server;
 use ActivityPhp\Server\Cache\CacheHelper;
 use Exception;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 
 /**
  * Request handler
  */
-class Request
+final class Request
 {
-    const HTTP_HEADER_ACCEPT = 'application/activity+json,application/ld+json,application/json';
+    public const string HTTP_HEADER_ACCEPT = 'application/activity+json,application/ld+json,application/json';
 
     /**
      * @var string HTTP method
      */
-    protected $method = 'GET';
+    protected string $method = 'GET';
 
     /**
      * Allowed HTTP methods
      *
-     * @var array
+     * @var string[]
      */
-    protected $allowedMethods = [
-        'GET', 'POST'
+    protected array $allowedMethods = [
+        'GET',
+        'POST',
     ];
 
     /**
      * HTTP client
      *
-     * @var \GuzzleHttp\Client
+     * @var Client
      */
-    protected $client;
+    protected Client $client;
 
     /**
      * Number of allowed retries
@@ -51,26 +53,30 @@ class Request
      * 0 : never retry
      * >0: throw exception after this number of retries
      */
-    protected $maxRetries = 0;
+    protected int $maxRetries = 0;
 
     /**
      * Number of seconds to wait before retrying
      */
-    protected $sleepBeforeRetry = 5;
+    protected int $sleepBeforeRetry = 5;
 
     /**
      * Current retries counter
      */
-    protected $retryCounter = 0;
+    protected int $retryCounter = 0;
 
     /**
      * Set HTTP client
      *
      * @param float|int $timeout
-     * @param string $agent
+     * @param string    $agent
+     * @param array     $requestOptions guzzle request options
      */
-    public function __construct($timeout = 10.0, $agent = '')
-    {
+    public function __construct(
+        float|int $timeout = 10.0,
+        string $agent = '',
+        public private(set) array $requestOptions = [],
+    ) {
         $headers = ['Accept' => self::HTTP_HEADER_ACCEPT];
 
         if ($agent) {
@@ -79,7 +85,7 @@ class Request
 
         $this->client = new Client([
             'timeout' => $timeout,
-            'headers' => $headers
+            'headers' => $headers,
         ]);
     }
 
@@ -88,62 +94,54 @@ class Request
      */
     public function setMaxRetries(int $maxRetries, int $sleepBeforeRetry = 5): self
     {
-        $this->maxRetries = $maxRetries;
+        $this->maxRetries       = $maxRetries;
         $this->sleepBeforeRetry = $sleepBeforeRetry;
 
         return $this;
     }
 
     /**
-     * Set HTTP methods
-     *
-     * @param string $method
-     */
-    protected function setMethod(string $method)
-    {
-        if (in_array($method, $this->allowedMethods)) {
-            $this->method = $method;
-        }
-    }
-
-    /**
-     * Get HTTP methods
-     *
-     * @return string
-     */
-    protected function getMethod()
-    {
-        return $this->method;
-    }
-
-    /**
      * Execute a GET request
      *
-     * @param  string $url
+     * @param string $url
+     *
      * @return string
+     * @throws GuzzleException
+     * @throws Exception
      */
-    public function get(string $url)
+    public function get(string $url): string
     {
         if (CacheHelper::has($url)) {
             return CacheHelper::get($url);
         }
 
         try {
-            $content = $this->client->get($url)->getBody()->getContents();
+            $content = $this->client->get($url, $this->requestOptions)
+                                    ->getBody()
+                                    ->getContents()
+            ;
         } catch (Exception $e) {
-            Server::server()->logger()->error(
-                __METHOD__ . ':failure',
-                ['url' => $url, 'message' => $e->getMessage()]
-            );
-            if ($this->maxRetries === -1
-             || $this->retryCounter < $this->maxRetries
+            Server::server()
+                  ->logger()
+                  ->error(
+                      __METHOD__.':failure',
+                      ['url' => $url, 'message' => $e->getMessage()],
+                  )
+            ;
+            if (
+                $this->maxRetries === -1
+                || $this->retryCounter < $this->maxRetries
             ) {
                 $this->retryCounter++;
-                Server::server()->logger()->info(
-                    __METHOD__ . ':retry#' . $this->retryCounter,
-                    ['url' => $url]
-                );
+                Server::server()
+                      ->logger()
+                      ->info(
+                          __METHOD__.':retry#'.$this->retryCounter,
+                          ['url' => $url],
+                      )
+                ;
                 sleep($this->sleepBeforeRetry);
+
                 return $this->get($url);
             }
 
@@ -155,5 +153,27 @@ class Request
         $this->retryCounter = 0;
 
         return $content;
+    }
+
+    /**
+     * Get HTTP methods
+     *
+     * @return string
+     */
+    protected function getMethod(): string
+    {
+        return $this->method;
+    }
+
+    /**
+     * Set HTTP methods
+     *
+     * @param string $method
+     */
+    protected function setMethod(string $method): void
+    {
+        if (in_array($method, $this->allowedMethods)) {
+            $this->method = $method;
+        }
     }
 }

@@ -76,7 +76,6 @@ instance), you may pass a custom logger driver. As it implements
 By default, the driver is `Psr\Log\NullLogger` which discards all log messages.
 You can use any PSR-3 compatible logger such as [Monolog](https://github.com/Seldaek/monolog).
 
-
 **stream**
 
 The default output for logging message is `php://stdout`.
@@ -92,7 +91,6 @@ $server = new Server([
     ],
 ]);
 ```
-
 
 **channel**
 
@@ -112,9 +110,7 @@ $server = new Server([
 
 ________________________________________________________________________
 
-
 ### Instance parameters
-
 
 **host**
 
@@ -168,8 +164,7 @@ ways:
 
 - `ignore` : non standard types and properties are ignored
 - `include`: non standard types and properties are set and created on
-the fly.
-
+  the fly.
 
 ```php
 use ActivityPhp\Server;
@@ -180,7 +175,6 @@ $server = new Server([
     ],
 ]);
 ```
-
 
 **debug**
 
@@ -201,9 +195,7 @@ For security purpose, the default value is `false`.
 
 ________________________________________________________________________
 
-
 ### HTTP parameters
-
 
 **timeout**
 
@@ -259,17 +251,30 @@ $server = new Server([
 ]);
 ```
 
+**Guzzle Request Options** since 9.0
+
+```php
+use ActivityPhp\Server;
+
+// Set some Guzzle Request Options
+$server = new Server([
+    'http'   => [
+    // During local development and requests against Servers with self-signed certificates
+        'requestOptions'=> [
+            'verify' => false,
+            ]
+
+    ],
+]);
+```
 
 ________________________________________________________________________
 
-
 ### Cache parameters
-
 
 **type**
 
 The default type of cache is `filesystem`. Cache is actived by default.
-
 
 **enabled**
 
@@ -292,7 +297,6 @@ By default, it stores cache files in the common working directory (See
 
 You can customize where cache files are stored with the `stream`
 parameter.
-
 
 ```php
 use ActivityPhp\Server;
@@ -362,14 +366,12 @@ are supplied as dependencies.
 
 ________________________________________________________________________
 
-
 ### Dialects parameters
 
 Dialect parameter has a special role.
 
 It defines and load ActivityPub types and properties which are not
 defined in the standard protocol.
-
 
 **type**
 
@@ -406,7 +408,6 @@ $server = new Server([
 
 After this loading, the new types and properties are usable.
 
-
 ```php
 use ActivityPhp\Type;
 
@@ -424,12 +425,12 @@ $person  = Type::create([
 
 [More about dialects management]({{ site.doc_baseurl }}/activitypub-dialects-management.html)
 
-[An example of Peertube's dialect implementation]({{ site.doc_baseurl }}/fetch-peertube-outbox-activities-using-dialects.html)
+[An example of Peertube's dialect implementation]({{ site.doc_baseurl
+}}/fetch-peertube-outbox-activities-using-dialects.html)
 
 ________________________________________________________________________
 
 ________________________________________________________________________
-
 
 ### Ontologies parameters
 
@@ -490,7 +491,6 @@ For more informations about creating your custom ontology, see the
 dedicated manual
 [ontologies management manual]({{ site.doc_baseurl }}/activitypub-ontologies-management.html)
 
-
 Obviously, you can load several ontologies.
 
 ```php
@@ -511,12 +511,12 @@ Following ontologies are currently supported:
 - lemmy
 - bookwyrm
 
-
 This feature needs you. Contributions are very welcome.
 
 [More about ontologies management]({{ site.doc_baseurl }}/activitypub-ontologies-management.html)
 
-[An example of Peertube's ontology implementation]({{ site.doc_baseurl }}/fetch-peertube-outbox-activities-using-dialects.html)
+[An example of Peertube's ontology implementation]({{ site.doc_baseurl
+}}/fetch-peertube-outbox-activities-using-dialects.html)
 
 ________________________________________________________________________
 

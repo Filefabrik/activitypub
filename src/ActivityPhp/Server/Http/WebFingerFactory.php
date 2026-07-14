@@ -18,12 +18,12 @@ use Exception;
 /**
  * A simple WebFinger discoverer tool
  */
-class WebFingerFactory
+final class WebFingerFactory
 {
-    const WEBFINGER_URL = '%s://%s%s/.well-known/webfinger?resource=acct:%s';
+    public const WEBFINGER_URL = '%s://%s%s/.well-known/webfinger?resource=acct:%s';
 
     /**
-     * @var null|\ActivityPhp\Server
+     * @var null|Server
      */
     protected static $server;
 
@@ -38,19 +38,21 @@ class WebFingerFactory
      *
      * @param string $handle
      * @param string $scheme Only for testing purpose
+     *
      * @return \ActivityPhp\Server\Http\WebFinger
      * @throws \Exception if handle is malformed.
      */
     public static function get(string $handle, string $scheme = 'https')
     {
-        if (! preg_match(
+        if (
+            !preg_match(
                 '/^@?(?P<user>[\w\-\.]+)@(?P<host>[\w\.\-]+)(?P<port>:[\d]+)?$/',
                 $handle,
-                $matches
+                $matches,
             )
         ) {
             throw new Exception(
-                "WebFinger handle is malformed '{$handle}'"
+                "WebFinger handle is malformed '{$handle}'",
             );
         }
 
@@ -64,17 +66,18 @@ class WebFingerFactory
             $scheme,
             $matches['host'],
             isset($matches['port']) ? $matches['port'] : '',
-            $handle
+            $handle,
         );
 
         $content = Util::decodeJson(
-            (new Request(
+            new Request(
                 self::$server->config('http.timeout'),
-                self::$server->config('http.agent')
-            ))->get($url)
+                self::$server->config('http.agent'),
+                self::$server->config('http.requestOptions'),
+            )->get($url),
         );
 
-        if (! is_array($content) || ! count($content)) {
+        if (!is_array($content) || !count($content)) {
             throw new Exception('WebFinger fetching has failed');
         }
 
@@ -86,7 +89,7 @@ class WebFingerFactory
     /**
      * Inject a server instance
      *
-     * @param  \ActivityPhp\Server $server
+     * @param Server $server
      */
     public static function setServer(Server $server)
     {

@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types=1);
 /*
  * This file is part of the ActivityPhp package.
  *
@@ -12,27 +13,28 @@
 namespace ActivityPhp\Server\Configuration;
 
 use Exception;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 /**
  * Logger configuration stack
  */
-class LoggerConfiguration extends AbstractConfiguration
+final class LoggerConfiguration extends AbstractConfiguration
 {
     /**
      * @var string Logger class name
      */
-    protected $driver = '\Psr\Log\NullLogger';
+    protected string $driver = NullLogger::class;
 
     /**
      * @var string Logger stream
      */
-    protected $stream = 'php://stdout';
+    protected string $stream = 'php://stdout';
 
     /**
      * @var string
      */
-    protected $channel = 'global';
+    protected string $channel = 'global';
 
     /**
      * Dispatch configuration parameters
@@ -47,18 +49,17 @@ class LoggerConfiguration extends AbstractConfiguration
     /**
      * Create logger instance
      *
-     * @return \Psr\Log\LoggerInterface
+     * @return LoggerInterface
+     * @throws Exception
      */
-    public function createLogger()
+    public function createLogger(): LoggerInterface
     {
         if (!class_exists($this->driver)) {
             throw new Exception(
-                "Logger driver does not exist. Given='{$this->driver}'"
+                "Logger driver does not exist. Given='{$this->driver}'",
             );
         }
 
-        $logger = new $this->driver();
-
-        return $logger;
+        return new $this->driver();
     }
 }

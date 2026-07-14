@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the ActivityPhp package.
  *
@@ -15,7 +17,7 @@ use Exception;
 
 /**
  * Abstract methods for configurations classes
- */ 
+ */
 abstract class AbstractConfiguration
 {
     /**
@@ -25,38 +27,26 @@ abstract class AbstractConfiguration
     {
         $this->setArray($params);
     }
-    
-    /**
-     * Get a config value
-     *
-     * @param  string $key
-     * @return string A configuration value
-     */
-    public function get($key)
-    {
-        if (isset($this->$key)) {
-            return $this->$key;
-        }
-
-        throw new Exception("'$key' parameter does not exist");
-    }
 
     /**
      * Set configuration values by array
      *
+     * @param array $settings
+     *
      * @return void
+     * @throws Exception
      */
-    public function setArray(array $settings)
+    public function setArray(array $settings): void
     {
         foreach ($settings as $key => $value) {
             if (!is_string($key)) {
                 throw new Exception(
-                    "Configuration key must be a string"
+                    'Configuration key must be a string',
                 );
             } elseif (!isset($this->$key) && !property_exists($this, $key)) {
                 throw new Exception(
-                    "Configuration parameter '$key' does not exist"
-                );                
+                    sprintf("Configuration parameter '%s' does not exist", $key),
+                );
             } else {
                 // @todo Should be validated
                 $this->$key = $value;
@@ -64,5 +54,21 @@ abstract class AbstractConfiguration
         }
     }
 
-    
+    /**
+     * Get a config value
+     *
+     * @param string $key
+     *
+     * @return mixed A configuration value
+     * @throws Exception
+     */
+    public function get(string $key): mixed
+    {
+        if (isset($this->$key)) {
+            return $this->$key;
+        }
+
+        throw new Exception(sprintf("'%s' parameter does not exist", $key));
+    }
+
 }

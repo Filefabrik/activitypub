@@ -18,6 +18,7 @@ use ActivityPhp\Server\Actor\Inbox;
 use ActivityPhp\Server\Actor\Outbox;
 use ActivityPhp\Server\Cache\CacheHelper;
 use ActivityPhp\Server\Configuration;
+use Exception;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 
@@ -29,56 +30,81 @@ final class Server
     /**
      * @var self
      */
-    private static $singleton;
+    private static Server $singleton;
 
     /**
-     * @var array<\ActivityPhp\Server\Actor>
+     * @var array<Actor>
      */
-    private $actors = [];
+    private array $actors = [];
 
     /**
-     * @var array<\ActivityPhp\Server\Actor\Inbox>
+     * @var array<Inbox>
      */
-    private $inboxes = [];
+    private array $inboxes = [];
 
     /**
-     * @var array<\ActivityPhp\Server\Actor\Outbox>
+     * @var array<Outbox>
      */
-    private $outboxes = [];
+    private array $outboxes = [];
 
     /**
-     * @var \Psr\Log\LoggerInterface|null
+     * @var LoggerInterface|null
      */
-    private $logger;
+    private ?LoggerInterface $logger;
 
     /**
-     * @var \ActivityPhp\Server\Configuration|null
+     * @var Configuration
      */
-    private $configuration;
+    private Configuration $configuration;
 
     /**
      * Server constructor
      *
      * @param array<string,mixed> $config Server configuration
+     *
+     * @throws Exception
      */
     public function __construct(array $config = [])
     {
-        self::$singleton = $this;
+        self::$singleton     = $this;
         $this->configuration = new Configuration();
         $this->configuration->dispatchParameters($config);
-        $this->logger = $this->config('logger')->createLogger();
+        $this->logger = $this->config('logger')
+                             ->createLogger()
+        ;
 
         CacheHelper::setPool(
-            $this->config('cache')
+            $this->config('cache'),
         );
     }
 
     /**
-     * Get logger instance
+     * Get a configuration handler
+     *
+     *
+     *
+     * @throws Exception
      */
-    public function logger(): ?LoggerInterface
+    public function config(
+        string $parameter,
+    ): mixed {
+        return $this->configuration->getConfig($parameter);
+    }
+
+    /**
+     * Get server instance with a static call
+     *
+     * @param array<string,string|int|array<string>> $settings
+     *
+     * @throws Exception
+     */
+    public static function server(array $settings = []): self
     {
-        return $this->logger;
+        if (is_null(self::$singleton)) {
+            self::$singleton = new self($settings);
+        }
+
+        return self::$singleton;
     }
 
     /**
@@ -90,30 +116,18 @@ final class Server
     }
 
     /**
-     * Get a configuration handler
-     *
-     * @return \ActivityPhp\Server\Configuration\LoggerConfiguration
-     *       | \ActivityPhp\Server\Configuration\InstanceConfiguration
-     *       | \ActivityPhp\Server\Configuration\HttpConfiguration
-     *       | \ActivityPhp\Server\Configuration\CacheConfiguration
-     *       | string
-     */
-    public function config(string $parameter)
-    {
-        return $this->configuration->getConfig($parameter);
-    }
-
-    /**
      * Get an inbox instance
      * It's a local instance
      *
-     * @param  string $handle An actor name
+     * @param string $handle An actor name
      */
     public function inbox(string $handle): Inbox
     {
-        $this->logger()->info($handle . ':' . __METHOD__);
+        $this->logger()
+             ->info($handle.':'.__METHOD__)
+        ;
 
-        if (! isset($this->inboxes[$handle])) {
+        if (!isset($this->inboxes[$handle])) {
             // Build actor
             $actor = $this->actor($handle);
 
@@ -124,31 +138,23 @@ final class Server
     }
 
     /**
-     * Get an outbox instance
-     * It may be a local or a distant outbox.
+     * Get logger instance
      */
-    public function outbox(string $handle): Outbox
+    public function logger(): ?LoggerInterface
     {
-        $this->logger()->info($handle . ':' . __METHOD__);
-
-        if (! isset($this->outboxes[$handle])) {
-            // Build actor
-            $actor = $this->actor($handle);
-
-            $this->outboxes[$handle] = new Outbox($actor, $this);
-        }
-
-        return $this->outboxes[$handle];
+        return $this->logger;
     }
 
     /**
-     * Build an server-oriented actor object
+     * Build a server-oriented actor object
      */
     public function actor(string $handle): Actor
     {
-        $this->logger()->info($handle . ':' . __METHOD__);
+        $this->logger()
+             ->info($handle.':'.__METHOD__)
+        ;
 
-        if (! isset($this->actors[$handle])) {
+        if (!isset($this->actors[$handle])) {
             $this->actors[$handle] = new Actor($handle, $this);
         }
 
@@ -156,16 +162,22 @@ final class Server
     }
 
     /**
-     * Get server instance with a static call
-     *
-     * @param array<string,string|int|array<string>> $settings
+     * Get an outbox instance
+     * It may be a local or a distant outbox.
      */
-    public static function server(array $settings = []): self
+    public function outbox(string $handle): Outbox
     {
-        if (is_null(self::$singleton)) {
-            self::$singleton = new self($settings);
+        $this->logger()
+             ->info($handle.':'.__METHOD__)
+        ;
+
+        if (!isset($this->outboxes[$handle])) {
+            // Build actor
+            $actor = $this->actor($handle);
+
+            $this->outboxes[$handle] = new Outbox($actor, $this);
         }
 
-        return self::$singleton;
+        return $this->outboxes[$handle];
     }
 }

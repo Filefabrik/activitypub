@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the ActivityPhp package.
  *
@@ -11,13 +13,11 @@
 
 namespace ActivityPhp\Server;
 
-use DateTime;
-use Exception;
-use DateInterval;
-use ActivityPhp\Type;
 use ActivityPhp\Server;
-use ActivityPhp\Type\Util;
 use ActivityPhp\Server\Http\Request as HttpRequest;
+use ActivityPhp\Type\Util;
+use Exception;
+use GuzzleHttp\Exception\GuzzleException;
 
 /**
  * \ActivityPhp\Server\Helper provides global helper methods for a server
@@ -32,62 +32,72 @@ abstract class Helper
      *
      * @var string[]
      */
-    protected static $acceptHeaders = [
+    protected static array $acceptHeaders = [
         'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
         'application/activity+json',
-        '*/*'
+        '*/*',
     ];
 
     /**
      * Validate HTTP Accept headers
      *
-     * @param  null|string|array $accept
-     * @param  bool              $strict Strict mode
+     * @param null|string|array $accept
+     * @param bool              $strict Strict mode
+     *
      * @return bool
      * @throws \Exception when strict mode enabled
      */
     public static function validateAcceptHeader($accept, $strict = false)
     {
-        if (is_string($accept)
+        if (
+            is_string($accept)
             && in_array($accept, self::$acceptHeaders)
         ) {
             return true;
-        } elseif (is_array($accept)
+        } elseif (
+            is_array($accept)
             && count(
-                array_intersect($accept, self::$acceptHeaders)
+                array_intersect($accept, self::$acceptHeaders),
             )
         ) {
             return true;
         }
 
-        if (! $strict) {
+        if (!$strict) {
             return false;
         }
 
         throw new Exception(
             sprintf(
                 "HTTP Accept header error. Given: '%s'",
-                $accept
-            )
+                $accept,
+            ),
         );
     }
 
     /**
      * Fetch JSON content from an URL
      *
-     * @param  string    $url
-     * @param  float|int $timeout
+     * @param string    $url
+     * @param float|int $timeout
+     *
      * @return array
+     * @throws GuzzleException
+     * @throws Exception
      */
-    public static function fetch($url, $timeout = 10.0)
+    public static function fetch($url, $timeout = 10.0): array
     {
         return Util::decodeJson(
-           (new HttpRequest($timeout))
+            new HttpRequest($timeout)
                 ->setMaxRetries(
-                    Server::server()->config('http')->get('retries'),
-                    Server::server()->config('http')->get('sleep')
+                    Server::server()
+                          ->config('http')
+                          ->get('retries'),
+                    Server::server()
+                          ->config('http')
+                          ->get('sleep'),
                 )
-                ->get($url)
+                ->get($url),
         );
     }
 }
