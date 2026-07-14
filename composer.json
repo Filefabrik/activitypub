@@ -1,7 +1,7 @@
 {
     "name": "filefabrik/activitypub",
     "type": "library",
-    "version": "0.9.0",
+    "version": "0.9.1",
     "description": "A PHP implementation of ActivityPub protocol based upon the ActivityStreams 2.0 data format.",
     "keywords": [
         "ActivityPub",
